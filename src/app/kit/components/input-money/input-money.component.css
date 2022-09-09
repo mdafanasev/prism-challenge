@@ -1,0 +1,64 @@
+:host {
+  display: flex;
+  height: 72px;
+  width: 450px;
+  overflow: hidden;
+  border-radius: var(--fc-border-radius);
+  border: 2px solid transparent;
+}
+
+:host:focus-within {
+  border-color: var(--fc-color-accent);
+}
+
+.wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-grow: 1;
+  background-color: var(--fc-color-input-bg);
+  padding: 4px 16px;
+  cursor: text;
+}
+
+.label {
+  font-size: var(--fc-font-small);
+  color: var(--fc-color-input-fg);
+  margin-bottom: 8px;
+}
+
+:host:focus-within .label {
+  color: var(--fc-color-accent);
+}
+
+.input {
+  font-size: var(--fc-font-large);
+  border: none;
+  background: none;
+  color: var(--fc-color-input-fg);
+  padding: 0;
+  outline: none;
+}
+
+.loader {
+  position: absolute;
+  top: 35px;
+  left: 10px;
+  color: var(--fc-color-input-fg);
+}
+
+.currency {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fc-font-large);
+  background-color: var(--fc-color-button-bg);
+  color: var(--fc-color-button-fg);
+  height: 100%;
+  width: 150px;
+}
+
+.input--hidden {
+  opacity: 0;
+}

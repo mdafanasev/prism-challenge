@@ -1,0 +1,13 @@
+body {
+  padding: 0;
+  margin: 0;
+  font-family: var(--fc-font-family);
+  color: var(--fc-color-fg);
+  background-color: var(--fc-color-bg);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}

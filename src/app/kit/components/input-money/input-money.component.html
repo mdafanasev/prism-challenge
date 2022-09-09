@@ -1,0 +1,18 @@
+<label class="wrapper">
+  <span class="label">{{ label }}</span>
+  <input
+    type="text"
+    [formControl]="control"
+    (blur)="handleBlur()"
+    mask="separator.2"
+    thousandSeparator=""
+    inputmode="decimal"
+    class="input"
+    [class.input--hidden]="pending"
+    data-test-id="fc-input-money__input"
+  />
+  <fc-loader class="loader" *ngIf="pending"></fc-loader>
+</label>
+<span class="currency" data-test-id="fc-input-money__currency">
+  {{ currency }}
+</span>

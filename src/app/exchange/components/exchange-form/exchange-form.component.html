@@ -1,0 +1,26 @@
+<ng-container *ngIf="model">
+  <div *ngIf="quoteCounter >= 2" class="quote-update">
+    The quote has been updated
+  </div>
+  <div *ngIf="error" class="error">
+    {{ error }}
+  </div>
+  <fc-input-money
+    *fcLet="sentValue | async as sent"
+    [currency]="model.sent"
+    [ngModel]="sent"
+    (ngModelChange)="requestQuoteWithSent($event)"
+    [pending]="sent === null && !error"
+    [debounceTime]="500"
+    label="You send"
+  ></fc-input-money>
+  <fc-input-money
+    *fcLet="receivedValue | async as received"
+    [currency]="model.received"
+    [ngModel]="received"
+    (ngModelChange)="requestQuoteWithReceived($event)"
+    [pending]="received === null && !error"
+    [debounceTime]="500"
+    label="You get"
+  ></fc-input-money>
+</ng-container>
