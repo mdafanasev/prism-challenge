@@ -2,8 +2,8 @@ import { Component, forwardRef, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   ControlValueAccessor,
-  FormsModule,
   NG_VALUE_ACCESSOR,
+  ReactiveFormsModule,
 } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ReplaySubject } from 'rxjs';
@@ -34,7 +34,7 @@ describe('ExchangeFormComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [FormsModule, LetModule],
+      imports: [ReactiveFormsModule, LetModule],
       declarations: [ExchangeFormComponent, MockInputMoneyComponent],
       providers: [{ provide: ExchangeService, useValue: service }],
     }).compileComponents();

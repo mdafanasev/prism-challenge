@@ -3,8 +3,11 @@ import {
   ChangeDetectorRef,
   Component,
   Input,
+  OnDestroy,
+  OnInit,
 } from '@angular/core';
-import { catchError, map, Observable, of, tap, throwError } from 'rxjs';
+import { FormControl } from '@angular/forms';
+import { catchError, filter, Subject, switchMap, takeUntil, tap, throwError } from 'rxjs';
 import { Money } from 'src/app/kit';
 import { ExchangeService } from '../../services/exchange.service';
 import { ExchangeModel } from '../../types/exchange-model';
@@ -20,44 +23,66 @@ const DEFAULT_MODEL: ExchangeModel = { sent: 'USD', received: 'EUR' };
   styleUrls: ['./exchange-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ExchangeFormComponent {
+export class ExchangeFormComponent implements OnInit, OnDestroy {
   @Input() model: ExchangeModel = DEFAULT_MODEL;
 
-  sentValue: Observable<Money> = of(NULL_MONEY);
+  sentControl = new FormControl<Money>(NULL_MONEY);
 
-  receivedValue: Observable<Money> = of(NULL_MONEY);
+  isSentPending = false;
+
+  receivedControl = new FormControl<Money>(NULL_MONEY);
+
+  isReceivedPending = false;
 
   quoteCounter = 0;
 
   error: string | null = null;
+
+  private destroy = new Subject<void>();
 
   constructor(
     private readonly exchangeService: ExchangeService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
-  requestQuoteWithSent(sent: Money | null): void {
-    if (sent?.amount) {
-      this.sentValue = of(sent);
-      this.receivedValue = this.requestQuote({
-        sent,
-        receivedCurrency: this.model?.received,
-      }).pipe(map((value) => value.received));
-    } else {
-      this.receivedValue = of(NULL_MONEY);
-    }
+  ngOnInit(): void {
+    this.sentControl.valueChanges
+      .pipe(
+        filter(Boolean),
+        tap(() => (this.isReceivedPending = true)),
+        switchMap((value) =>
+          this.requestQuote({
+            sent: value,
+            receivedCurrency: this.model?.received,
+          })
+        ),
+        takeUntil(this.destroy)
+      )
+      .subscribe((value) => {
+        this.receivedControl.setValue(value.received, { emitEvent: false });
+        this.isReceivedPending = false;
+      });
+    this.receivedControl.valueChanges
+      .pipe(
+        filter(Boolean),
+        tap(() => (this.isSentPending = true)),
+        switchMap((value) =>
+          this.requestQuote({
+            received: value,
+            sentCurrency: this.model?.sent,
+          })
+        ),
+        takeUntil(this.destroy)
+      )
+      .subscribe((value) => {
+        this.sentControl.setValue(value.sent, { emitEvent: false });
+        this.isSentPending = false;
+      });
   }
 
-  requestQuoteWithReceived(received: Money | null): void {
-    if (received?.amount) {
-      this.receivedValue = of(received);
-      this.sentValue = this.requestQuote({
-        received,
-        sentCurrency: this.model?.sent,
-      }).pipe(map((value) => value.sent));
-    } else {
-      this.sentValue = of(NULL_MONEY);
-    }
+  ngOnDestroy(): void {
+    this.destroy.next();
+    this.destroy.complete();
   }
 
   private requestQuote(request: ExchangeRequest) {
