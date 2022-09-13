@@ -1,5 +1,10 @@
 import { Component, forwardRef, Input } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  fakeAsync,
+  TestBed,
+  tick,
+} from '@angular/core/testing';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -7,8 +12,7 @@ import {
 } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ReplaySubject } from 'rxjs';
-import { Currency, Money } from 'src/app/kit';
-import { LetModule } from '../../../utils';
+import { Currency } from 'src/app/kit';
 import { ExchangeService } from '../../services/exchange.service';
 import { ExchangeQuote } from '../../types/exchange-quote';
 
@@ -17,6 +21,9 @@ import { ExchangeFormComponent } from './exchange-form.component';
 describe('ExchangeFormComponent', () => {
   const SENT_CURRENCY: Currency = 'USD';
   const RECV_CURRENCY: Currency = 'EUR';
+  const AMOUNT_A = 1234;
+  const AMOUNT_B = 1250;
+
   let component: ExchangeFormComponent;
   let fixture: ComponentFixture<ExchangeFormComponent>;
   let quoteResp: ReplaySubject<ExchangeQuote>;
@@ -34,7 +41,7 @@ describe('ExchangeFormComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, LetModule],
+      imports: [ReactiveFormsModule],
       declarations: [ExchangeFormComponent, MockInputMoneyComponent],
       providers: [{ provide: ExchangeService, useValue: service }],
     }).compileComponents();
@@ -58,57 +65,49 @@ describe('ExchangeFormComponent', () => {
     expect(po.receivedComponent).toBeTruthy();
   });
 
-  it('should call service on sent input update', () => {
-    po.updateSentValue({ currency: SENT_CURRENCY, amount: 1234 });
+  it('should call service on sent input update', fakeAsync(() => {
+    po.updateSentValue(AMOUNT_A);
+    tick(1000);
+    fixture.detectChanges();
     expect(service.getExchangeQuote).toHaveBeenCalledWith({
-      sent: { currency: SENT_CURRENCY, amount: 1234 },
-      receivedCurrency: RECV_CURRENCY,
+      sent: AMOUNT_A,
     });
-  });
+  }));
 
-  it('should call service on received input update', () => {
-    po.updateReceivedValue({ currency: RECV_CURRENCY, amount: 4321 });
+  it('should call service on received input update', fakeAsync(() => {
+    po.updateReceivedValue(AMOUNT_B);
+    tick(1000);
+    fixture.detectChanges();
     expect(service.getExchangeQuote).toHaveBeenCalledWith({
-      received: { currency: RECV_CURRENCY, amount: 4321 },
-      sentCurrency: SENT_CURRENCY,
+      received: AMOUNT_B,
     });
-  });
+  }));
 
-  it('should update received value after updating sent value', (done) => {
-    po.updateSentValue({ currency: SENT_CURRENCY, amount: 1234 });
+  it('should update received value after updating sent value', fakeAsync(() => {
+    po.updateSentValue(AMOUNT_A);
     mockQuoteResp({
-      sent: { currency: SENT_CURRENCY, amount: 1234 },
-      received: { currency: RECV_CURRENCY, amount: 1250 },
+      sent: AMOUNT_A,
+      received: AMOUNT_B,
       rate: 1.03,
       expiresAt: new Date(),
     });
+    tick(1000);
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
-      expect(po.receivedComponent.writeValue).toHaveBeenCalledWith({
-        currency: RECV_CURRENCY,
-        amount: 1250,
-      });
-      done();
-    });
-  });
+    expect(po.receivedComponent.writeValue).toHaveBeenCalledWith(AMOUNT_B);
+  }));
 
-  it('should update sent value after updating received value', (done) => {
-    po.updateReceivedValue({ currency: RECV_CURRENCY, amount: 4321 });
+  it('should update sent value after updating received value', fakeAsync(() => {
+    po.updateReceivedValue(AMOUNT_B);
     mockQuoteResp({
-      sent: { currency: SENT_CURRENCY, amount: 4320 },
-      received: { currency: RECV_CURRENCY, amount: 4321 },
+      sent: AMOUNT_A,
+      received: AMOUNT_B,
       rate: 1.03,
       expiresAt: new Date(),
     });
+    tick(1000);
     fixture.detectChanges();
-    fixture.whenStable().then(() => {
-      expect(po.sentComponent.writeValue).toHaveBeenCalledWith({
-        currency: SENT_CURRENCY,
-        amount: 4320,
-      });
-      done();
-    });
-  });
+    expect(po.sentComponent.writeValue).toHaveBeenCalledWith(AMOUNT_A);
+  }));
 });
 
 @Component({
@@ -131,13 +130,13 @@ class MockInputMoneyComponent implements ControlValueAccessor {
 
   @Input() debounceTime = 0;
 
-  onChange: (value: Money) => void = () => {};
+  onChange: (value: number | null) => void = () => {};
 
   onTouched: () => void = () => {};
 
   writeValue = jest.fn();
 
-  registerOnChange(onChange: (value: Money) => void): void {
+  registerOnChange(onChange: (value: number | null) => void): void {
     this.onChange = onChange;
   }
 
@@ -147,8 +146,6 @@ class MockInputMoneyComponent implements ControlValueAccessor {
 }
 
 class PageObject<T> {
-  private readonly component = this.fixture.componentInstance;
-
   get sentComponent() {
     return this.getMoneyInputs()[0];
   }
@@ -159,11 +156,11 @@ class PageObject<T> {
 
   constructor(private readonly fixture: ComponentFixture<T>) {}
 
-  updateSentValue(value: Money): void {
+  updateSentValue(value: number | null): void {
     this.sentComponent.onChange(value);
   }
 
-  updateReceivedValue(value: Money): void {
+  updateReceivedValue(value: number | null): void {
     this.receivedComponent.onChange(value);
   }
 

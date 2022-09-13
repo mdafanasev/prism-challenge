@@ -40,10 +40,7 @@ describe('ExchangeService', () => {
 
   it('should make request on getExchangeQuote call', () => {
     service
-      .getExchangeQuote({
-        sent: { currency: SENT_CURRENCY, amount: SENT_AMOUNT },
-        receivedCurrency: RECV_CURRENCY,
-      })
+      .getExchangeQuote({ sent: SENT_AMOUNT })
       .pipe(takeUntil(destroy))
       .subscribe();
     const req = http.expectOne(URL);
@@ -54,14 +51,13 @@ describe('ExchangeService', () => {
   it('should return correct quote object on getExchangeQuote call', (done) => {
     service
       .getExchangeQuote({
-        sent: { currency: SENT_CURRENCY, amount: SENT_AMOUNT },
-        receivedCurrency: RECV_CURRENCY,
+        sent: SENT_AMOUNT,
       })
       .pipe(takeUntil(destroy))
       .subscribe((quote) => {
         expect(quote).toEqual({
-          sent: { currency: SENT_CURRENCY, amount: SENT_AMOUNT },
-          received: { currency: RECV_CURRENCY, amount: RECV_AMOUNT },
+          sent: SENT_AMOUNT,
+          received: RECV_AMOUNT,
           rate: RATE,
           expiresAt: expiresAt,
         });

@@ -1,6 +1,9 @@
 :host {
-  display: grid;
-  gap: 24px;
+  display: block;
+  max-width: 80vw;
+}
+.input {
+  margin-bottom: 24px;
 }
 .quote-update {
   text-align: center;
@@ -9,6 +12,7 @@
   color: var(--fc-color-accent);
   border-radius: var(--fc-border-radius);
   overflow: hidden;
+  margin-bottom: 24px;
 }
 .error {
   padding: 16px;
@@ -17,4 +21,5 @@
   color: var(--fc-color-error);
   border-radius: var(--fc-border-radius);
   overflow: hidden;
+  margin-bottom: 24px;
 }

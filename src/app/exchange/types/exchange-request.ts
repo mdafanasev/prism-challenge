@@ -1,13 +1,9 @@
-import { Currency, Money } from 'src/app/kit';
-
 export interface ExchangeSentRequest {
-  sent: Money;
-  receivedCurrency: Currency;
+  sent: number;
 }
 
 export interface ExchangeReceivedRequest {
-  received: Money;
-  sentCurrency: Currency;
+  received: number;
 }
 
 export type ExchangeRequest = ExchangeSentRequest | ExchangeReceivedRequest;

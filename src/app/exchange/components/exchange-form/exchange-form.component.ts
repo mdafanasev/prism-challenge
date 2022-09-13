@@ -7,15 +7,34 @@ import {
   OnInit,
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { catchError, filter, Subject, switchMap, takeUntil, tap, throwError } from 'rxjs';
-import { Money } from 'src/app/kit';
+import {
+  catchError,
+  defer,
+  EMPTY,
+  iif,
+  merge,
+  of,
+  Subject,
+  switchMap,
+  takeUntil,
+  tap,
+  timer,
+} from 'rxjs';
 import { ExchangeService } from '../../services/exchange.service';
 import { ExchangeModel } from '../../types/exchange-model';
+import { ExchangeQuote } from '../../types/exchange-quote';
 import { ExchangeRequest } from '../../types/exchange-request';
 
-const NULL_MONEY: Money = { currency: 'USD', amount: 0 };
-
 const DEFAULT_MODEL: ExchangeModel = { sent: 'USD', received: 'EUR' };
+
+const DEBOUNCE_TIME = 500;
+
+const NULL_QUOTE = {
+  sent: 0,
+  received: 0,
+  rate: 0,
+  expiresAt: new Date(),
+};
 
 @Component({
   selector: 'fc-exchange-form',
@@ -26,17 +45,19 @@ const DEFAULT_MODEL: ExchangeModel = { sent: 'USD', received: 'EUR' };
 export class ExchangeFormComponent implements OnInit, OnDestroy {
   @Input() model: ExchangeModel = DEFAULT_MODEL;
 
-  sentControl = new FormControl<Money>(NULL_MONEY);
+  sentControl = new FormControl<number | null>(null);
+
+  receivedControl = new FormControl<number | null>(null);
 
   isSentPending = false;
-
-  receivedControl = new FormControl<Money>(NULL_MONEY);
 
   isReceivedPending = false;
 
   quoteCounter = 0;
 
   error: string | null = null;
+
+  private activeControl = this.sentControl;
 
   private destroy = new Subject<void>();
 
@@ -46,38 +67,7 @@ export class ExchangeFormComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.sentControl.valueChanges
-      .pipe(
-        filter(Boolean),
-        tap(() => (this.isReceivedPending = true)),
-        switchMap((value) =>
-          this.requestQuote({
-            sent: value,
-            receivedCurrency: this.model?.received,
-          })
-        ),
-        takeUntil(this.destroy)
-      )
-      .subscribe((value) => {
-        this.receivedControl.setValue(value.received, { emitEvent: false });
-        this.isReceivedPending = false;
-      });
-    this.receivedControl.valueChanges
-      .pipe(
-        filter(Boolean),
-        tap(() => (this.isSentPending = true)),
-        switchMap((value) =>
-          this.requestQuote({
-            received: value,
-            sentCurrency: this.model?.sent,
-          })
-        ),
-        takeUntil(this.destroy)
-      )
-      .subscribe((value) => {
-        this.sentControl.setValue(value.sent, { emitEvent: false });
-        this.isSentPending = false;
-      });
+    this.listenForChanges();
   }
 
   ngOnDestroy(): void {
@@ -85,15 +75,77 @@ export class ExchangeFormComponent implements OnInit, OnDestroy {
     this.destroy.complete();
   }
 
-  private requestQuote(request: ExchangeRequest) {
+  private listenForChanges(): void {
+    merge(
+      this.sentControl.valueChanges.pipe(
+        tap(() => (this.activeControl = this.sentControl))
+      ),
+      this.receivedControl.valueChanges.pipe(
+        tap(() => (this.activeControl = this.receivedControl))
+      )
+    )
+      .pipe(
+        switchMap((value) =>
+          iif(
+            () => value !== null && value > 0,
+            defer(() => this.requestQuote(value as number)),
+            defer(() => this.cleanQuote())
+          )
+        ),
+        takeUntil(this.destroy)
+      )
+      .subscribe((quote) => this.setValues(quote));
+  }
+
+  private requestQuote(value: number) {
     this.resetState();
-    return this.exchangeService.getExchangeQuote(request).pipe(
-      tap(() => this.quoteCounter++),
-      catchError((error) => {
+    const request: ExchangeRequest =
+      this.activeControl === this.sentControl
+        ? { sent: value }
+        : { received: value };
+    this.startPending();
+    return timer(DEBOUNCE_TIME).pipe(
+      switchMap(() => this.exchangeService.getExchangeQuote(request)),
+      tap(() => {
+        this.stopPending();
+        this.quoteCounter++;
+      }),
+      catchError(() => {
         this.showError();
-        return throwError(() => error);
+        return EMPTY;
       })
     );
+  }
+
+  private cleanQuote() {
+    this.resetState();
+    this.stopPending();
+    return of(NULL_QUOTE);
+  }
+
+  private startPending() {
+    if (this.activeControl === this.sentControl) {
+      this.isReceivedPending = true;
+    }
+    if (this.activeControl === this.receivedControl) {
+      this.isSentPending = true;
+    }
+  }
+
+  private stopPending() {
+    this.isSentPending = false;
+    this.isReceivedPending = false;
+  }
+
+  private setValues(quote: ExchangeQuote) {
+    if (this.activeControl === this.sentControl) {
+      this.receivedControl.setValue(quote.received || null, {
+        emitEvent: false,
+      });
+    }
+    if (this.activeControl === this.receivedControl) {
+      this.sentControl.setValue(quote.sent || null, { emitEvent: false });
+    }
   }
 
   private resetState(): void {
@@ -102,6 +154,8 @@ export class ExchangeFormComponent implements OnInit, OnDestroy {
   }
 
   private showError(): void {
+    this.isSentPending = false;
+    this.isReceivedPending = false;
     this.error = 'Unable to load exchange quote. Please, try again';
     this.cdr.markForCheck();
   }

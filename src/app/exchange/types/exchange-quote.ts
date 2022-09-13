@@ -1,8 +1,6 @@
-import { Money } from 'src/app/kit';
-
 export interface ExchangeQuote {
-  sent: Money;
-  received: Money;
+  sent: number;
+  received: number;
   rate: number;
   expiresAt: Date;
 }

@@ -1,11 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { repeatAt } from '../../utils';
-import { ExchangeModel } from '../types/exchange-model';
 import { ExchangeQuote } from '../types/exchange-quote';
 import { ExchangeRequest } from '../types/exchange-request';
-import { getModelFromRequest } from '../utils/get-model-from-request';
+import { isSentRequest } from '../utils/request-guards';
 
 type GetExchangeQuoteBody =
   | { sentAmount: string; receivedAmount?: never }
@@ -31,39 +30,24 @@ export class ExchangeService {
         this.mapRequestToBody(request)
       )
       .pipe(
-        map((payload) =>
-          this.mapPayloadToQuote(payload, getModelFromRequest(request))
-        ),
+        map((payload) => this.mapPayloadToQuote(payload)),
         repeatAt((value) => value.expiresAt)
       );
   }
 
   private mapRequestToBody(request: ExchangeRequest): GetExchangeQuoteBody {
-    if ('sent' in request) {
-      return { sentAmount: `${request.sent.amount}` };
+    if (isSentRequest(request)) {
+      return { sentAmount: `${request.sent}` };
     }
-    return { receivedAmount: `${request.received.amount}` };
+    return { receivedAmount: `${request.received}` };
   }
 
-  private mapPayloadToQuote(
-    payload: GetExchangeQuotePayload,
-    model: ExchangeModel
-  ): ExchangeQuote {
+  private mapPayloadToQuote(payload: GetExchangeQuotePayload): ExchangeQuote {
     return {
-      sent: { currency: model.sent, amount: Number(payload.sentAmount) },
-      received: {
-        currency: model.received,
-        amount: Number(payload.receivedAmount),
-      },
+      sent: Number(payload.sentAmount),
+      received: Number(payload.receivedAmount),
       rate: Number(payload.rate),
       expiresAt: new Date(payload.expiresAt),
     };
-  }
-
-  private makeCacheKey(request: ExchangeRequest): string {
-    if ('sent' in request) {
-      return `${request.sent.currency}_${request.receivedCurrency}_${request.sent.amount}`;
-    }
-    return `${request.received.currency}_${request.sentCurrency}_${request.received.amount}`;
   }
 }

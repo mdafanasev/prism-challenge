@@ -12,9 +12,8 @@ import {
   FormControl,
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
-import { debounceTime, Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { Currency } from '../../types/currency';
-import { Money } from '../../types/money';
 
 @Component({
   selector: 'fc-input-money',
@@ -38,11 +37,9 @@ export class InputMoneyComponent
 
   @Input() pending = false;
 
-  @Input() debounceTime = 0;
+  control = new FormControl<string | null>(null);
 
-  control = new FormControl<string>('', { nonNullable: true });
-
-  private onChange: (value: Money) => void = () => {};
+  private onChange: (value: number | null) => void = () => {};
 
   private onTouched: () => void = () => {};
 
@@ -52,7 +49,7 @@ export class InputMoneyComponent
 
   ngOnInit(): void {
     this.control.valueChanges
-      .pipe(debounceTime(this.debounceTime), takeUntil(this.destroy))
+      .pipe(takeUntil(this.destroy))
       .subscribe((value) => this.updateValue(value));
   }
 
@@ -61,15 +58,14 @@ export class InputMoneyComponent
     this.destroy.complete();
   }
 
-  writeValue(value?: Money): void {
-    this.control.setValue(this.fromMoney(value), {
+  writeValue(value: number | null): void {
+    this.control.setValue(value !== null ? `${value}` : '', {
       emitEvent: false,
-      emitViewToModelChange: false,
     });
     this.cdr.markForCheck();
   }
 
-  registerOnChange(onChange: (value: Money) => void): void {
+  registerOnChange(onChange: (value: number | null) => void): void {
     this.onChange = onChange;
   }
 
@@ -81,19 +77,8 @@ export class InputMoneyComponent
     this.onTouched();
   }
 
-  private updateValue(value: string): void {
-    this.onChange(this.toMoney(value));
+  private updateValue(value: string | null): void {
+    this.onChange(value !== null ? Number(value) : null);
     this.cdr.markForCheck();
-  }
-
-  private fromMoney(value?: Money): string {
-    return value?.amount ? `${value.amount}` : '';
-  }
-
-  private toMoney(value: string): Money {
-    return {
-      currency: this.currency,
-      amount: Number(value) || 0,
-    };
   }
 }

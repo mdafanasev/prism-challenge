@@ -1,12 +1,12 @@
 <label class="wrapper">
   <span class="label">{{ label }}</span>
   <input
+    *ngIf="!pending"
     type="text"
     [formControl]="control"
     (blur)="handleBlur()"
     mask="separator.2"
     thousandSeparator=""
-    inputmode="decimal"
     class="input"
     [class.input--hidden]="pending"
     data-test-id="fc-input-money__input"

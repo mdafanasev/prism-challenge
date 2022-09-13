@@ -8,15 +8,15 @@
   <fc-input-money
     [formControl]="sentControl"
     [currency]="model.sent"
-    [debounceTime]="500"
     [pending]="isSentPending"
     label="You send"
+    class="input"
   ></fc-input-money>
   <fc-input-money
     [formControl]="receivedControl"
     [currency]="model.received"
-    [debounceTime]="500"
     [pending]="isReceivedPending"
     label="You get"
+    class="input"
   ></fc-input-money>
 </ng-container>

@@ -12,6 +12,8 @@ import { Subject, takeUntil } from 'rxjs';
 import { InputMoneyComponent } from './input-money.component';
 
 describe('InputMoneyComponent', () => {
+  const AMOUNT_A = 1234;
+  const AMOUNT_B = 4321;
   let host: TestHostComponent;
   let fixture: ComponentFixture<TestHostComponent>;
   let po: PageObject<TestHostComponent>;
@@ -41,14 +43,14 @@ describe('InputMoneyComponent', () => {
   it('should emit changes on input value change', fakeAsync(() => {
     const cb = jest.fn();
     host.control.valueChanges.pipe(takeUntil(destroy)).subscribe(cb);
-    po.setValue('1234');
+    po.setValue(String(AMOUNT_A));
     tick();
-    expect(cb).toHaveBeenCalledWith({ currency: 'EUR', amount: 1234 });
+    expect(cb).toHaveBeenCalledWith(AMOUNT_A);
   }));
 
   it('should accept value from form', () => {
-    host.control.setValue({ currency: 'EUR', amount: 4321 });
-    expect(po.inputElement.value).toBe('4321');
+    host.control.setValue(AMOUNT_B);
+    expect(po.inputElement.value).toBe(String(AMOUNT_B));
   });
 
   it('should become touched on blur', () => {
