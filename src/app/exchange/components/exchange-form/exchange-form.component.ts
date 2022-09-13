@@ -128,8 +128,7 @@ export class ExchangeFormComponent implements OnInit, OnDestroy {
   private startPending() {
     if (this.activeControl === this.sentControl) {
       this.isReceivedPending = true;
-    }
-    if (this.activeControl === this.receivedControl) {
+    } else {
       this.isSentPending = true;
     }
   }
@@ -144,8 +143,7 @@ export class ExchangeFormComponent implements OnInit, OnDestroy {
       this.receivedControl.setValue(quote.received || null, {
         emitEvent: false,
       });
-    }
-    if (this.activeControl === this.receivedControl) {
+    } else {
       this.sentControl.setValue(quote.sent || null, { emitEvent: false });
     }
     this.rate = quote.rate;

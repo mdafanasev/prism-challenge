@@ -2,6 +2,10 @@
   display: block;
   max-width: 80vw;
 }
+.messages {
+  padding: 24px 0;
+  height: 72px;
+}
 .quote-update {
   text-align: center;
   padding: 16px;
@@ -29,20 +33,4 @@
 }
 .rate--hidden {
   opacity: 0;
-  height: 24px;
-}
-.rate-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 12px;
-  font-size: var(--fc-font-large);
-  background-origin: padding-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--fc-color-input-bg);
-  color: var(--fc-color-input-fg);
-}
-.rate-value {
-  padding-left: 8px;
 }

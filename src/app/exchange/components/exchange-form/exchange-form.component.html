@@ -1,10 +1,4 @@
 <ng-container *ngIf="model">
-  <div *ngIf="quoteCounter >= 2" class="quote-update">
-    The quote has been updated
-  </div>
-  <div *ngIf="error" class="error">
-    {{ error }}
-  </div>
   <fc-input-money
     [formControl]="sentControl"
     [currency]="model.sent"
@@ -12,10 +6,7 @@
     label="You send"
     class="input"
   ></fc-input-money>
-  <div class="rate" [class.rate--hidden]="!rate">
-    <span class="rate-icon">×</span>
-    <span class="rate-value">{{ rate }}</span>
-  </div>
+  <div class="rate" [class.rate--hidden]="!rate">Exchange rate: {{ rate }}</div>
   <fc-input-money
     [formControl]="receivedControl"
     [currency]="model.received"
@@ -23,4 +14,12 @@
     label="You get"
     class="input"
   ></fc-input-money>
+  <div class="messages">
+    <div *ngIf="quoteCounter >= 2" class="quote-update">
+      The quote has been updated
+    </div>
+    <div *ngIf="error" class="error">
+      {{ error }}
+    </div>
+  </div>
 </ng-container>
