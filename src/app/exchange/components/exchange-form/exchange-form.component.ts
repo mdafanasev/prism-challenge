@@ -53,6 +53,8 @@ export class ExchangeFormComponent implements OnInit, OnDestroy {
 
   isReceivedPending = false;
 
+  rate: number | null = null
+
   quoteCounter = 0;
 
   error: string | null = null;
@@ -146,6 +148,7 @@ export class ExchangeFormComponent implements OnInit, OnDestroy {
     if (this.activeControl === this.receivedControl) {
       this.sentControl.setValue(quote.sent || null, { emitEvent: false });
     }
+    this.rate = quote.rate;
   }
 
   private resetState(): void {

@@ -2,9 +2,6 @@
   display: block;
   max-width: 80vw;
 }
-.input {
-  margin-bottom: 24px;
-}
 .quote-update {
   text-align: center;
   padding: 16px;
@@ -22,4 +19,30 @@
   border-radius: var(--fc-border-radius);
   overflow: hidden;
   margin-bottom: 24px;
+}
+.rate {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  margin: 8px 0;
+}
+.rate--hidden {
+  opacity: 0;
+  height: 24px;
+}
+.rate-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  font-size: var(--fc-font-large);
+  background-origin: padding-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--fc-color-input-bg);
+  color: var(--fc-color-input-fg);
+}
+.rate-value {
+  padding-left: 8px;
 }
